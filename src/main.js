@@ -17,6 +17,34 @@ camera.position.z = 2
 camera.position.y = 0
 camera.position.x = 0
 
+
+const mouse = new THREE.Vector2()
+let prevMouse = new THREE.Vector2()
+let followMouse = new THREE.Vector2()
+let speed = 0
+let targetSpeed = 0
+
+window.addEventListener('mousemove', (event) => {
+ mouse.x = event.clientX / sizes.width;
+ mouse.y = 1 - event.clientY / sizes.height;
+})
+
+function getSpeed() {
+
+ speed = Math.sqrt(
+  (prevMouse.x - mouse.x) * (prevMouse.x - mouse.x) +
+  (prevMouse.y - mouse.y) * (prevMouse.y - mouse.y)
+ )
+
+ targetSpeed -= 0.1*(targetSpeed - speed)
+ followMouse.x -= 0.1*(mouse.x - followMouse.x)
+ followMouse.y -= 0.1*(mouse.y - followMouse.y)
+ 
+ prevMouse.x = mouse.x
+ prevMouse.y = mouse.y
+
+}
+
 const textureLoader = new THREE.TextureLoader()
 const medieval = textureLoader.load('/Medieval.jpg')
 
@@ -29,8 +57,10 @@ const shader = new THREE.ShaderMaterial({
   uTime: { value: 0 },
   uProgress: { value: 0 },
   uDirection: { value: 0 },
+  uSpeed : { value: 0 },
   uResolution: { value: new THREE.Vector4() },
   uTexture: { value: medieval },
+  uMouse: { value: mouse }
  },
  side: THREE.DoubleSide,
  // wireframe: true,
@@ -90,17 +120,10 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-renderer.shadowMap.enabled = true
-renderer.shadowMap.type = THREE.PCFSoftShadowMap
-renderer.outputColorSpace = THREE.SRGBColorSpace
 const clock = new THREE.Clock()
 
-const mouse = new THREE.Vector2()
 
-window.addEventListener('mousemove', (event) => {
- mouse.x = event.clientX / sizes.width * 2 - 1
- mouse.y = - (event.clientY / sizes.height) * 2 + 1
-})
+
 
 // const raycaster = new THREE.Raycaster()
 
@@ -120,8 +143,10 @@ canvas.addEventListener('mouseup', () => {
   value: 0,
  })
 })
+console.log(mouse)
 
 function animate() {
+ getSpeed()
  // raycaster.setFromCamera(mouse, camera)
 
  // const intersects = raycaster.intersectObject(plane);
@@ -130,8 +155,10 @@ function animate() {
  // }
 
  const elapsedTime = clock.getElapsedTime()
-
  shader.uniforms.uTime.value = elapsedTime
+ shader.uniforms.uMouse.value = mouse
+ shader.uniforms.uSpeed.value = targetSpeed
+
  controls.update()
 
  renderer.render(scene, camera)
