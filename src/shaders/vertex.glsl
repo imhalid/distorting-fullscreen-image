@@ -1,21 +1,36 @@
 uniform float uTime;
-uniform float uWaveElevation;
-uniform vec2 uWaveFrequency;
-uniform float uWaveDirection;
-varying float vWaveElevation;
+uniform float uProgress;
+uniform float uDirection;
+
+varying vec2 vUv;
+varying float vProgress;
 
 void main()
 {
-    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+     vec3 pos = position;
+    // pos.z += .1 *sin(pos.x*10.);
+    // pos.z += mask * .5 * sin(uTime + pos.x * 10.);
+    // float mask = smoothstep(.4, .5, distance);
 
-    float wave = sin(modelPosition.x * uWaveFrequency.x * uWaveDirection + uTime * 5.0) * uWaveElevation / 4.0;
-    modelPosition.y += wave;
+    float distance = length(uv - vec2(.5));
+    float maxDistance = length(vec2(.5));
+
+    float normalizeDistance = distance / maxDistance;
+
+    float stickTo = normalizeDistance;
+    float stickOut = -normalizeDistance;
+
+    float stickEffect = mix(stickTo, stickOut, uDirection);
+
+    float mySuperDuperProgress = min(2. * uProgress, 2. * (1.-uProgress));
+    float zOffset = 2.;
 
 
-    vec4 viewPosition = viewMatrix * modelPosition;
-    vec4 projectedPosition = projectionMatrix * viewPosition;
+    float zProgress = mix(clamp(2. * uProgress, 0., 1.), clamp(1. - 2. * (1.- uProgress), 0., 1.), uDirection);
+    pos.z += zOffset * (stickEffect * mySuperDuperProgress - zProgress);
 
-    vWaveElevation = wave;
-
-    gl_Position = projectedPosition;
+    pos.z += uProgress*sin(distance*10. + 2.*uTime)*.1;
+    vUv = uv;
+    vProgress = uProgress;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

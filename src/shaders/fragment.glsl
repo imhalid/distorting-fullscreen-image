@@ -1,11 +1,13 @@
-uniform vec3 uDepthColor;
-uniform vec3 uSurfaceColor;
+uniform sampler2D uTexture;
+uniform vec4 uResolution;
 
-varying float vWaveElevation;
-
+varying vec2 vUv;
+varying float vProgress;
 void main()
 {
- vec3 color = mix(uDepthColor , uSurfaceColor, vWaveElevation);
- gl_FragColor = vec4(color, 1.0);
- #include <colorspace_fragment>
+     vec4 color = texture2D(uTexture, vUv);
+      #include <tonemapping_fragment>
+     gl_FragColor = color;
+     // #include <colorspace_fragment>
+     
 }
